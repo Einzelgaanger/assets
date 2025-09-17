@@ -1,6 +1,6 @@
-const CACHE_NAME = 'research-file-repo-v1';
-const STATIC_CACHE = 'static-v1';
-const DYNAMIC_CACHE = 'dynamic-v1';
+const CACHE_NAME = 'data-analysis-file-hub-v2';
+const STATIC_CACHE = 'static-v2';
+const DYNAMIC_CACHE = 'dynamic-v2';
 
 // Files to cache immediately
 const STATIC_FILES = [
@@ -66,6 +66,29 @@ self.addEventListener('fetch', (event) => {
 
   // Skip external requests
   if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  // For module scripts, always try network first to avoid MIME type issues
+  if (event.request.destination === 'script' && event.request.url.includes('.js')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            // Cache successful responses
+            const responseToCache = response.clone();
+            caches.open(DYNAMIC_CACHE)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cache if network fails
+          return caches.match(event.request);
+        })
+    );
     return;
   }
 

@@ -11,6 +11,12 @@ if ('serviceWorker' in navigator) {
       })
       .catch((error) => {
         console.log('Service Worker registration failed:', error);
+        // If service worker fails, try to unregister any existing ones
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          registrations.forEach(registration => {
+            registration.unregister();
+          });
+        });
       });
   });
 }

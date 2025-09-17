@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Data Analysis File Hub</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Debug Page - Data Analysis File Hub</h1>
+    
+    <div class="debug-section">
+        <h2>Service Worker Status</h2>
+        <div id="sw-status">Checking...</div>
+        <button onclick="clearServiceWorker()">Clear Service Worker</button>
+        <button onclick="clearAllCaches()">Clear All Caches</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Cache Status</h2>
+        <div id="cache-status">Checking...</div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Module Loading Test</h2>
+        <div id="module-status">Testing...</div>
+        <button onclick="testModuleLoading()">Test Module Loading</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Actions</h2>
+        <button onclick="location.href='/'">Go to Main App</button>
+        <button onclick="location.reload()">Reload Page</button>
+    </div>
+
+    <script>
+        // Check service worker status
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                const status = document.getElementById('sw-status');
+                if (registrations.length > 0) {
+                    status.innerHTML = `<span class="success">Service Worker Active (${registrations.length} registrations)</span>`;
+                } else {
+                    status.innerHTML = '<span class="error">No Service Worker Registered</span>';
+                }
+            });
+        } else {
+            document.getElementById('sw-status').innerHTML = '<span class="error">Service Worker Not Supported</span>';
+        }
+        
+        // Check cache status
+        if ('caches' in window) {
+            caches.keys().then(cacheNames => {
+                const status = document.getElementById('cache-status');
+                if (cacheNames.length > 0) {
+                    status.innerHTML = `<span class="success">Caches Found: ${cacheNames.join(', ')}</span>`;
+                } else {
+                    status.innerHTML = '<span class="error">No Caches Found</span>';
+                }
+            });
+        } else {
+            document.getElementById('cache-status').innerHTML = '<span class="error">Cache API Not Supported</span>';
+        }
+        
+        // Test module loading
+        function testModuleLoading() {
+            const status = document.getElementById('module-status');
+            status.innerHTML = 'Testing module loading...';
+            
+            fetch('/assets/index-DNrjZV5N.js')
+                .then(response => {
+                    if (response.ok) {
+                        status.innerHTML = '<span class="success">Module loading successful!</span>';
+                    } else {
+                        status.innerHTML = `<span class="error">Module loading failed: ${response.status}</span>`;
+                    }
+                })
+                .catch(error => {
+                    status.innerHTML = `<span class="error">Module loading error: ${error.message}</span>`;
+                });
+        }
+        
+        // Clear service worker
+        function clearServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => {
+                        registration.unregister();
+                    });
+                    alert('Service Worker cleared! Please refresh the page.');
+                });
+            }
+        }
+        
+        // Clear all caches
+        function clearAllCaches() {
+            if ('caches' in window) {
+                caches.keys().then(cacheNames => {
+                    cacheNames.forEach(cacheName => {
+                        caches.delete(cacheName);
+                    });
+                    alert('All caches cleared! Please refresh the page.');
+                });
+            }
+        }
+        
+        // Run initial tests
+        testModuleLoading();
+    </script>
+</body>
+</html>
