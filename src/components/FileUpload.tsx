@@ -25,13 +25,13 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
   }, []);
 
   const validateFile = (file: File): boolean => {
-    const validExtensions = ['.r', '.R', '.csv', '.txt', '.py', '.sql'];
+    const validExtensions = ['.r', '.R', '.csv', '.txt', '.py', '.sql', '.png'];
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
     
     if (!validExtensions.includes(fileExtension)) {
       toast({
         title: "Invalid file type",
-        description: "Please upload R files (.R), CSV files (.csv), or text files (.txt)",
+        description: "Please upload R files (.R), CSV files (.csv), text files (.txt), or PNG images (.png)",
         variant: "destructive",
       });
       return false;
@@ -124,14 +124,14 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
               Upload your files
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Drag and drop R files, CSV files, or click to browse
+              Drag and drop R files, CSV files, PNG images, or click to browse
             </p>
           </div>
           
           <input
             type="file"
             multiple
-            accept=".r,.R,.csv,.txt,.py,.sql"
+            accept=".r,.R,.csv,.txt,.py,.sql,.png"
             onChange={handleFileInput}
             className="hidden"
             id="file-upload"

@@ -74,6 +74,7 @@ export const FileList = ({ files, onRemoveFile }: FileListProps) => {
       case 'txt': return 'Text';
       case 'py': return 'Python';
       case 'sql': return 'SQL';
+      case 'png': return 'PNG Image';
       default: return 'File';
     }
   };
