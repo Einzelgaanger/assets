@@ -1,0 +1,163 @@
+import { useState, useCallback } from "react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Upload, FileText, Database } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+interface FileUploadProps {
+  onFileUploaded: (file: File, url: string) => void;
+}
+
+export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
+  const [isDragActive, setIsDragActive] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setIsDragActive(true);
+    } else if (e.type === "dragleave") {
+      setIsDragActive(false);
+    }
+  }, []);
+
+  const validateFile = (file: File): boolean => {
+    const validExtensions = ['.r', '.R', '.csv', '.txt', '.py', '.sql'];
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+    
+    if (!validExtensions.includes(fileExtension)) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload R files (.R), CSV files (.csv), or text files (.txt)",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      toast({
+        title: "File too large",
+        description: "Please upload files smaller than 10MB",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleFiles = async (files: FileList) => {
+    const fileArray = Array.from(files);
+    
+    for (const file of fileArray) {
+      if (!validateFile(file)) continue;
+      
+      setIsUploading(true);
+      
+      try {
+        // For now, create a mock URL - this will be replaced with Supabase storage
+        const mockUrl = `https://your-domain.com/files/${file.name}`;
+        
+        // Simulate upload delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        onFileUploaded(file, mockUrl);
+        
+        toast({
+          title: "File uploaded successfully",
+          description: `${file.name} is ready for download`,
+        });
+      } catch (error) {
+        toast({
+          title: "Upload failed",
+          description: "Please try again",
+          variant: "destructive",
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+    
+    const files = e.dataTransfer.files;
+    handleFiles(files);
+  }, []);
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) handleFiles(files);
+  };
+
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    if (extension === 'csv') return <Database className="h-8 w-8 text-success" />;
+    if (extension === 'r') return <FileText className="h-8 w-8 text-primary" />;
+    return <FileText className="h-8 w-8 text-muted-foreground" />;
+  };
+
+  return (
+    <Card className="p-6">
+      <div
+        className={cn(
+          "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
+          isDragActive 
+            ? "border-primary bg-primary/5" 
+            : "border-upload-border bg-upload-bg hover:border-primary/60"
+        )}
+        onDragEnter={handleDrag}
+        onDragLeave={handleDrag}
+        onDragOver={handleDrag}
+        onDrop={handleDrop}
+      >
+        <div className="flex flex-col items-center space-y-4">
+          <Upload className="h-12 w-12 text-muted-foreground" />
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">
+              Upload your files
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Drag and drop R files, CSV files, or click to browse
+            </p>
+          </div>
+          
+          <input
+            type="file"
+            multiple
+            accept=".r,.R,.csv,.txt,.py,.sql"
+            onChange={handleFileInput}
+            className="hidden"
+            id="file-upload"
+            disabled={isUploading}
+          />
+          
+          <Button 
+            onClick={() => document.getElementById('file-upload')?.click()}
+            disabled={isUploading}
+            className="mt-4"
+          >
+            {isUploading ? "Uploading..." : "Choose Files"}
+          </Button>
+          
+          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+            <div className="flex items-center space-x-1">
+              <FileText className="h-4 w-4" />
+              <span>R files</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Database className="h-4 w-4" />
+              <span>CSV files</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
