@@ -1,22 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { FileUpload } from "@/components/FileUpload";
 import { FileList } from "@/components/FileList";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Info, Server, LogOut, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { FileService, GlobalFile } from "@/services/fileService";
 import { useToast } from "@/hooks/use-toast";
 
-interface UploadedFile {
-  id: string;
-  name: string;
-  size: number;
-  uploadedAt: Date;
-  downloadUrl: string;
-  type: string;
-}
 
 const Index = () => {
   const [uploadedFiles, setUploadedFiles] = useState<GlobalFile[]>([]);
@@ -25,12 +15,7 @@ const Index = () => {
   const { logout } = useAuth();
   const { toast } = useToast();
 
-  // Load files on component mount
-  useEffect(() => {
-    loadFiles();
-  }, []);
-
-  const loadFiles = async () => {
+  const loadFiles = useCallback(async () => {
     try {
       setIsLoading(true);
       const files = await FileService.getAllFiles();
@@ -45,7 +30,12 @@ const Index = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  // Load files on component mount
+  useEffect(() => {
+    loadFiles();
+  }, [loadFiles]);
 
   const handleFileUploaded = async (file: File, url: string) => {
     try {
@@ -223,7 +213,6 @@ const Index = () => {
             </div>
           </div>
         )}
-        </div>
       </div>
     </div>
   );
