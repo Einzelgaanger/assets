@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Upload, FileText, Database, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 
 interface FileUploadProps {
   onFileUploaded: (file: File, url: string) => void;
@@ -59,29 +58,11 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
       setIsUploading(true);
       
       try {
-        const filePath = `${crypto.randomUUID()}-${file.name}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from('research-files')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false,
-          });
-
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage
-          .from('research-files')
-          .getPublicUrl(filePath, { download: true });
-
-        const publicUrl = data.publicUrl;
-
-        onFileUploaded(file, publicUrl);
-
-        toast({
-          title: "File uploaded successfully",
-          description: `${file.name} is ready for download`,
-        });
+        // Create a mock URL for the callback - the actual upload happens in the parent component
+        const mockUrl = `https://supabase.co/storage/v1/object/public/research-files/${crypto.randomUUID()}-${file.name}`;
+        
+        // Call the parent's upload handler
+        onFileUploaded(file, mockUrl);
       } catch (error: any) {
         toast({
           title: "Upload failed",
@@ -117,29 +98,36 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
   };
 
   return (
-    <Card className="p-6">
-      <div
-        className={cn(
-          "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
-          isDragActive 
-            ? "border-primary bg-primary/5" 
-            : "border-upload-border bg-upload-bg hover:border-primary/60"
-        )}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <div className="flex flex-col items-center space-y-4">
-          <Upload className="h-12 w-12 text-muted-foreground" />
-          <div>
-            <h3 className="text-lg font-semibold text-foreground">
-              Upload your files
-            </h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Drag and drop R files, CSV files, Excel files, PNG images, or click to browse
-            </p>
-          </div>
+    <div
+      className={cn(
+        "border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200",
+        isDragActive 
+          ? "border-primary bg-primary/5 scale-[1.02]" 
+          : "border-gray-300 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/50 hover:border-primary/60 hover:bg-primary/5"
+      )}
+      onDragEnter={handleDrag}
+      onDragLeave={handleDrag}
+      onDragOver={handleDrag}
+      onDrop={handleDrop}
+    >
+      <div className="flex flex-col items-center space-y-6">
+        <div className={cn(
+          "w-16 h-16 rounded-2xl flex items-center justify-center transition-colors",
+          isDragActive ? "bg-primary/10" : "bg-gray-100 dark:bg-gray-700"
+        )}>
+          <Upload className={cn(
+            "h-8 w-8 transition-colors",
+            isDragActive ? "text-primary" : "text-gray-400"
+          )} />
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-xl font-semibold text-foreground">
+            {isDragActive ? "Drop files here" : "Upload your files"}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Drag and drop your data analysis files or click to browse
+          </p>
+        </div>
           
           <input
             type="file"
@@ -152,30 +140,40 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
             aria-label="Upload files"
           />
           
-          <Button 
-            onClick={() => document.getElementById('file-upload')?.click()}
-            disabled={isUploading}
-            className="mt-4"
-          >
-            {isUploading ? "Uploading..." : "Choose Files"}
-          </Button>
-          
-          <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-            <div className="flex items-center space-x-1">
-              <FileText className="h-4 w-4" />
-              <span>R files</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <Database className="h-4 w-4" />
-              <span>CSV files</span>
-            </div>
-            <div className="flex items-center space-x-1">
-              <FileSpreadsheet className="h-4 w-4" />
-              <span>Excel files</span>
-            </div>
+        <Button 
+          onClick={() => document.getElementById('file-upload')?.click()}
+          disabled={isUploading}
+          size="lg"
+          className="px-8"
+        >
+          {isUploading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              Uploading...
+            </>
+          ) : (
+            <>
+              <Upload className="w-4 h-4 mr-2" />
+              Choose Files
+            </>
+          )}
+        </Button>
+        
+        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg border">
+            <FileText className="h-3.5 w-3.5 text-blue-500" />
+            <span>R Scripts</span>
+          </div>
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg border">
+            <Database className="h-3.5 w-3.5 text-green-500" />
+            <span>CSV Data</span>
+          </div>
+          <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-white dark:bg-gray-800 rounded-lg border">
+            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+            <span>Excel Files</span>
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };

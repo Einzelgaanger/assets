@@ -1,7 +1,7 @@
 {
-  "name": "Research File Repository",
-  "short_name": "FileRepo",
-  "description": "Professional file hosting and sharing platform for research data, reports, and analysis files",
+  "name": "Data Analysis File Hub",
+  "short_name": "DataHub",
+  "description": "Professional file hosting and sharing platform for data analysis files, reports, and datasets",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
