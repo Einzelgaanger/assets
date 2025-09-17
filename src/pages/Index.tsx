@@ -150,7 +150,7 @@ const Index = () => {
             </div>
           </div>
         ) : (
-          <div className="grid gap-8 lg:grid-cols-2">
+          <div className="space-y-8">
             <section className="space-y-6">
               <div>
                 <h2 className="text-2xl font-semibold text-foreground mb-2">
@@ -160,7 +160,9 @@ const Index = () => {
                   Drag and drop your data analysis files or click to browse
                 </p>
               </div>
-              <FileUpload onFileUploaded={handleFileUploaded} />
+              <div className="mx-4">
+                <FileUpload onFileUploaded={handleFileUploaded} />
+              </div>
             </section>
 
             <section className="space-y-6">
@@ -175,10 +177,12 @@ const Index = () => {
                   }
                 </p>
               </div>
-              <FileList 
-                files={uploadedFiles} 
-                onRemoveFile={handleRemoveFile}
-              />
+              <div className="mx-4">
+                <FileList 
+                  files={uploadedFiles} 
+                  onRemoveFile={handleRemoveFile}
+                />
+              </div>
             </section>
           </div>
         )}

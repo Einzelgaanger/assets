@@ -7,6 +7,7 @@ export interface GlobalFile {
   uploaded_at: string;
   download_url: string;
   type: string;
+  path: string;
   uploaded_by?: string;
 }
 
@@ -35,70 +36,45 @@ export class FileService {
       .from(BUCKET_NAME)
       .getPublicUrl(filePath, { download: true });
 
-    // Create file record
-    const globalFile: GlobalFile = {
-      id: fileId,
-      name: file.name,
-      size: file.size,
-      uploaded_at: new Date().toISOString(),
-      download_url: data.publicUrl,
-      type: file.type,
-    };
+    // Create file record in database
+    const { data: dbFile, error: dbError } = await supabase
+      .from('files')
+      .insert({
+        id: fileId,
+        name: file.name,
+        size: file.size,
+        uploaded_at: new Date().toISOString(),
+        download_url: data.publicUrl,
+        type: file.type,
+        path: filePath,
+      })
+      .select()
+      .single();
 
-    // Store file metadata in a simple way (using localStorage as a simple database)
-    // In a real app, you'd use a proper database table
-    const existingFiles = this.getStoredFiles();
-    const updatedFiles = [globalFile, ...existingFiles];
-    localStorage.setItem('global_files', JSON.stringify(updatedFiles));
+    if (dbError) {
+      // If database insert fails, clean up the uploaded file
+      await supabase.storage.from(BUCKET_NAME).remove([filePath]);
+      throw new Error(`Database insert failed: ${dbError.message}`);
+    }
 
-    return globalFile;
+    return dbFile as GlobalFile;
   }
 
-  // Get all files from storage
+  // Get all files from database
   static async getAllFiles(): Promise<GlobalFile[]> {
     try {
-      // First try to get from localStorage (our simple storage)
-      const storedFiles = this.getStoredFiles();
-      
-      // Verify files still exist in Supabase storage
-      const verifiedFiles = [];
-      for (const file of storedFiles) {
-        try {
-          // Check if file exists in storage
-          const fileName = file.download_url.split('/').pop()?.split('?')[0];
-          if (fileName) {
-            const { data, error } = await supabase.storage
-              .from(BUCKET_NAME)
-              .list('', {
-                search: fileName
-              });
-            
-            if (!error && data && data.length > 0) {
-              verifiedFiles.push(file);
-            }
-          }
-        } catch (error) {
-          console.warn(`File ${file.name} verification failed:`, error);
-        }
+      const { data: files, error } = await supabase
+        .from('files')
+        .select('*')
+        .order('uploaded_at', { ascending: false });
+
+      if (error) {
+        throw new Error(`Failed to fetch files: ${error.message}`);
       }
-      
-      // Update localStorage with verified files
-      localStorage.setItem('global_files', JSON.stringify(verifiedFiles));
-      
-      return verifiedFiles;
+
+      return files as GlobalFile[];
     } catch (error) {
       console.error('Error loading files:', error);
-      return this.getStoredFiles(); // Fallback to localStorage
-    }
-  }
-
-  // Get files from localStorage
-  private static getStoredFiles(): GlobalFile[] {
-    try {
-      const stored = localStorage.getItem('global_files');
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.error('Error parsing stored files:', error);
       return [];
     }
   }
@@ -106,30 +82,36 @@ export class FileService {
   // Delete a file
   static async deleteFile(fileId: string): Promise<void> {
     try {
-      // Get file info
-      const files = this.getStoredFiles();
-      const file = files.find(f => f.id === fileId);
-      
-      if (!file) {
-        throw new Error('File not found');
+      // Get file info from database
+      const { data: file, error: fetchError } = await supabase
+        .from('files')
+        .select('path')
+        .eq('id', fileId)
+        .single();
+
+      if (fetchError || !file) {
+        throw new Error('File not found in database');
       }
 
-      // Extract file path from URL
-      const filePath = file.download_url.split('/').pop()?.split('?')[0];
-      if (filePath) {
-        // Delete from Supabase storage
-        const { error } = await supabase.storage
-          .from(BUCKET_NAME)
-          .remove([filePath]);
-        
-        if (error) {
-          console.warn('Error deleting from storage:', error);
-        }
+      // Delete from Supabase storage
+      const { error: storageError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .remove([file.path]);
+
+      if (storageError) {
+        throw new Error(`Storage deletion failed: ${storageError.message}`);
       }
 
-      // Remove from localStorage
-      const updatedFiles = files.filter(f => f.id !== fileId);
-      localStorage.setItem('global_files', JSON.stringify(updatedFiles));
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('files')
+        .delete()
+        .eq('id', fileId);
+
+      if (dbError) {
+        throw new Error(`Database deletion failed: ${dbError.message}`);
+      }
+
     } catch (error) {
       console.error('Error deleting file:', error);
       throw error;
@@ -137,35 +119,59 @@ export class FileService {
   }
 
   // Get file download URL
-  static getDownloadUrl(fileId: string): string | null {
-    const files = this.getStoredFiles();
-    const file = files.find(f => f.id === fileId);
-    return file?.download_url || null;
+  static async getDownloadUrl(fileId: string): Promise<string | null> {
+    try {
+      const { data: file, error } = await supabase
+        .from('files')
+        .select('download_url')
+        .eq('id', fileId)
+        .single();
+
+      if (error || !file) {
+        return null;
+      }
+
+      return file.download_url;
+    } catch (error) {
+      console.error('Error getting download URL:', error);
+      return null;
+    }
   }
 
   // Clear all files (admin function)
   static async clearAllFiles(): Promise<void> {
     try {
-      const files = this.getStoredFiles();
-      
-      // Delete all files from storage
-      const filePaths = files.map(file => {
-        const fileName = file.download_url.split('/').pop()?.split('?')[0];
-        return fileName || '';
-      }).filter(Boolean);
+      // Get all files from database
+      const { data: files, error: fetchError } = await supabase
+        .from('files')
+        .select('path');
 
-      if (filePaths.length > 0) {
-        const { error } = await supabase.storage
+      if (fetchError) {
+        throw new Error(`Failed to fetch files: ${fetchError.message}`);
+      }
+
+      // Delete all files from storage
+      if (files && files.length > 0) {
+        const filePaths = files.map(file => file.path);
+        const { error: storageError } = await supabase.storage
           .from(BUCKET_NAME)
           .remove(filePaths);
         
-        if (error) {
-          console.warn('Error clearing storage:', error);
+        if (storageError) {
+          throw new Error(`Storage deletion failed: ${storageError.message}`);
         }
       }
 
-      // Clear localStorage
-      localStorage.removeItem('global_files');
+      // Clear database
+      const { error: dbError } = await supabase
+        .from('files')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+      if (dbError) {
+        throw new Error(`Database deletion failed: ${dbError.message}`);
+      }
+
     } catch (error) {
       console.error('Error clearing files:', error);
       throw error;
