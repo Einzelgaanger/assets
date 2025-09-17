@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, FileText, Database, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FileUploadProps {
   onFileUploaded: (file: File, url: string) => void;
@@ -58,22 +59,33 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
       setIsUploading(true);
       
       try {
-        // For now, create a mock URL - this will be replaced with Supabase storage
-        const mockUrl = `https://your-domain.com/files/${file.name}`;
-        
-        // Simulate upload delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        onFileUploaded(file, mockUrl);
-        
+        const filePath = `${crypto.randomUUID()}-${file.name}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('research-files')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data } = supabase.storage
+          .from('research-files')
+          .getPublicUrl(filePath, { download: true });
+
+        const publicUrl = data.publicUrl;
+
+        onFileUploaded(file, publicUrl);
+
         toast({
           title: "File uploaded successfully",
           description: `${file.name} is ready for download`,
         });
-      } catch (error) {
+      } catch (error: any) {
         toast({
           title: "Upload failed",
-          description: "Please try again",
+          description: error?.message || "Please try again",
           variant: "destructive",
         });
       } finally {
