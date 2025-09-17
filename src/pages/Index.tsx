@@ -152,37 +152,46 @@ const Index = () => {
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold text-foreground mb-2">
-                Upload Files
-              </h2>
-              <p className="text-muted-foreground">
-                Drag and drop your data analysis files or click to browse
-              </p>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading files...</p>
             </div>
-            <FileUpload onFileUploaded={handleFileUploaded} />
-          </section>
+          </div>
+        ) : (
+          <div className="grid gap-8 lg:grid-cols-2">
+            <section className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-semibold text-foreground mb-2">
+                  Upload Files
+                </h2>
+                <p className="text-muted-foreground">
+                  Drag and drop your data analysis files or click to browse
+                </p>
+              </div>
+              <FileUpload onFileUploaded={handleFileUploaded} />
+            </section>
 
-          <section className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold text-foreground mb-2">
-                Your Files
-              </h2>
-              <p className="text-muted-foreground">
-                {uploadedFiles.length > 0 
-                  ? `${uploadedFiles.length} file${uploadedFiles.length === 1 ? '' : 's'} uploaded`
-                  : 'No files uploaded yet'
-                }
-              </p>
-            </div>
-            <FileList 
-              files={uploadedFiles} 
-              onRemoveFile={handleRemoveFile}
-            />
-          </section>
-        </div>
+            <section className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-semibold text-foreground mb-2">
+                  Global Files
+                </h2>
+                <p className="text-muted-foreground">
+                  {uploadedFiles.length > 0 
+                    ? `${uploadedFiles.length} file${uploadedFiles.length === 1 ? '' : 's'} available globally`
+                    : 'No files uploaded yet'
+                  }
+                </p>
+              </div>
+              <FileList 
+                files={uploadedFiles} 
+                onRemoveFile={handleRemoveFile}
+              />
+            </section>
+          </div>
+        )}
 
         {uploadedFiles.length > 0 && (
           <div className="mt-12">
