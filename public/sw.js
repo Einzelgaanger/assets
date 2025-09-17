@@ -1,6 +1,6 @@
-const CACHE_NAME = 'data-analysis-file-hub-v2';
-const STATIC_CACHE = 'static-v2';
-const DYNAMIC_CACHE = 'dynamic-v2';
+const CACHE_NAME = 'data-analysis-file-hub-v3';
+const STATIC_CACHE = 'static-v3';
+const DYNAMIC_CACHE = 'dynamic-v3';
 
 // Files to cache immediately
 const STATIC_FILES = [
@@ -20,18 +20,29 @@ const STATIC_FILES = [
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then((cache) => {
-        console.log('Caching static files');
-        return cache.addAll(STATIC_FILES);
-      })
-      .then(() => {
-        console.log('Static files cached successfully');
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error('Failed to cache static files:', error);
-      })
+    // First, clear all old caches
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => {
+      // Then cache new static files
+      return caches.open(STATIC_CACHE)
+        .then((cache) => {
+          console.log('Caching static files');
+          return cache.addAll(STATIC_FILES);
+        });
+    }).then(() => {
+      console.log('Static files cached successfully');
+      return self.skipWaiting();
+    }).catch((error) => {
+      console.error('Failed to cache static files:', error);
+    })
   );
 });
 
