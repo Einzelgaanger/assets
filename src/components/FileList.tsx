@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Download, FileText, Database, CheckCircle, Trash2 } from "lucide-react";
+import { Copy, Download, FileText, Database, FileSpreadsheet, CheckCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
@@ -63,6 +63,7 @@ export const FileList = ({ files, onRemoveFile }: FileListProps) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
     if (extension === 'csv') return <Database className="h-5 w-5 text-success" />;
     if (extension === 'r') return <FileText className="h-5 w-5 text-primary" />;
+    if (extension === 'xlsx' || extension === 'xls') return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
     return <FileText className="h-5 w-5 text-muted-foreground" />;
   };
 
@@ -70,6 +71,8 @@ export const FileList = ({ files, onRemoveFile }: FileListProps) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
     switch (extension) {
       case 'csv': return 'CSV';
+      case 'xlsx': return 'Excel';
+      case 'xls': return 'Excel';
       case 'r': return 'R Script';
       case 'txt': return 'Text';
       case 'py': return 'Python';

@@ -42,15 +42,15 @@ const Index = () => {
             Research File Repository
           </h1>
           <p className="text-muted-foreground">
-            Upload and host your R scripts and CSV files for easy sharing
+            Professional file hosting and sharing platform for research data, reports, and analysis files
           </p>
         </div>
 
         <Alert className="mb-6">
           <Server className="h-4 w-4" />
           <AlertDescription>
-            Connect to Supabase to enable file storage. Click the green Supabase button in the top right to get started.
-            Files are currently stored locally for demo purposes.
+            Secure file storage powered by Supabase. Files are automatically cached for fast access and available offline.
+            Connect to Supabase to enable persistent file storage.
           </AlertDescription>
         </Alert>
 

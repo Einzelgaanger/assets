@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, Database } from "lucide-react";
+import { Upload, FileText, Database, FileSpreadsheet } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -25,13 +25,13 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
   }, []);
 
   const validateFile = (file: File): boolean => {
-    const validExtensions = ['.r', '.R', '.csv', '.txt', '.py', '.sql', '.png'];
+    const validExtensions = ['.r', '.R', '.csv', '.xlsx', '.xls', '.txt', '.py', '.sql', '.png'];
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
     
     if (!validExtensions.includes(fileExtension)) {
       toast({
         title: "Invalid file type",
-        description: "Please upload R files (.R), CSV files (.csv), text files (.txt), or PNG images (.png)",
+        description: "Please upload R files (.R), CSV files (.csv), Excel files (.xlsx, .xls), text files (.txt), or PNG images (.png)",
         variant: "destructive",
       });
       return false;
@@ -100,6 +100,7 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
     if (extension === 'csv') return <Database className="h-8 w-8 text-success" />;
     if (extension === 'r') return <FileText className="h-8 w-8 text-primary" />;
+    if (extension === 'xlsx' || extension === 'xls') return <FileSpreadsheet className="h-8 w-8 text-green-600" />;
     return <FileText className="h-8 w-8 text-muted-foreground" />;
   };
 
@@ -124,18 +125,19 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
               Upload your files
             </h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Drag and drop R files, CSV files, PNG images, or click to browse
+              Drag and drop R files, CSV files, Excel files, PNG images, or click to browse
             </p>
           </div>
           
           <input
             type="file"
             multiple
-            accept=".r,.R,.csv,.txt,.py,.sql,.png"
+            accept=".r,.R,.csv,.xlsx,.xls,.txt,.py,.sql,.png"
             onChange={handleFileInput}
             className="hidden"
             id="file-upload"
             disabled={isUploading}
+            aria-label="Upload files"
           />
           
           <Button 
@@ -154,6 +156,10 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
             <div className="flex items-center space-x-1">
               <Database className="h-4 w-4" />
               <span>CSV files</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <FileSpreadsheet className="h-4 w-4" />
+              <span>Excel files</span>
             </div>
           </div>
         </div>
