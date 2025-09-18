@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Copy, Download, FileText, Database, FileSpreadsheet, CheckCircle, Trash2 } from "lucide-react";
+import { Copy, Download, FileText, Database, FileSpreadsheet, Image, CheckCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { GlobalFile } from "@/services/fileService";
@@ -56,6 +56,7 @@ export const FileList = ({ files, onRemoveFile }: FileListProps) => {
     if (extension === 'csv') return <Database className="h-5 w-5 text-success" />;
     if (extension === 'r') return <FileText className="h-5 w-5 text-primary" />;
     if (extension === 'xlsx' || extension === 'xls') return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
+    if (['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'].includes(extension || '')) return <Image className="h-5 w-5 text-purple-600" />;
     return <FileText className="h-5 w-5 text-muted-foreground" />;
   };
 
@@ -70,6 +71,11 @@ export const FileList = ({ files, onRemoveFile }: FileListProps) => {
       case 'py': return 'Python';
       case 'sql': return 'SQL';
       case 'png': return 'PNG Image';
+      case 'jpg': case 'jpeg': return 'JPEG Image';
+      case 'gif': return 'GIF Image';
+      case 'bmp': return 'BMP Image';
+      case 'webp': return 'WebP Image';
+      case 'svg': return 'SVG Image';
       default: return 'File';
     }
   };

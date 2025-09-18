@@ -8,14 +8,17 @@ export interface GlobalFile {
   download_url: string;
   type: string;
   path: string;
+  category: string;
   uploaded_by?: string;
 }
+
+export type FileCategory = 'initial' | 'department' | 'grouped';
 
 const BUCKET_NAME = 'research-files';
 
 export class FileService {
   // Upload a file to Supabase storage
-  static async uploadFile(file: File): Promise<GlobalFile> {
+  static async uploadFile(file: File, category: FileCategory = 'initial'): Promise<GlobalFile> {
     const fileId = crypto.randomUUID();
     const filePath = `${fileId}-${file.name}`;
 
@@ -47,6 +50,7 @@ export class FileService {
         download_url: data.publicUrl,
         type: file.type,
         path: filePath,
+        category: category,
       })
       .select()
       .single();
@@ -75,6 +79,26 @@ export class FileService {
       return files as GlobalFile[];
     } catch (error) {
       console.error('Error loading files:', error);
+      return [];
+    }
+  }
+
+  // Get files by category
+  static async getFilesByCategory(category: FileCategory): Promise<GlobalFile[]> {
+    try {
+      const { data: files, error } = await supabase
+        .from('files')
+        .select('*')
+        .eq('category', category)
+        .order('uploaded_at', { ascending: false });
+
+      if (error) {
+        throw new Error(`Failed to fetch files for category ${category}: ${error.message}`);
+      }
+
+      return files as GlobalFile[];
+    } catch (error) {
+      console.error(`Error loading files for category ${category}:`, error);
       return [];
     }
   }

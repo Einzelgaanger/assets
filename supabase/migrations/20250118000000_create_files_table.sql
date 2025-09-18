@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS public.files (
   download_url TEXT NOT NULL,
   type TEXT NOT NULL,
   path TEXT NOT NULL,
+  category TEXT NOT NULL DEFAULT 'initial',
   uploaded_by TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS public.files (
 -- Create index for better performance
 CREATE INDEX IF NOT EXISTS idx_files_uploaded_at ON public.files(uploaded_at DESC);
 CREATE INDEX IF NOT EXISTS idx_files_name ON public.files(name);
+CREATE INDEX IF NOT EXISTS idx_files_category ON public.files(category);
 
 -- Enable Row Level Security
 ALTER TABLE public.files ENABLE ROW LEVEL SECURITY;

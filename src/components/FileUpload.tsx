@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, FileText, Database, FileSpreadsheet } from "lucide-react";
+import { Upload, FileText, Database, FileSpreadsheet, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +25,7 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
   }, []);
 
   const validateFile = (file: File): boolean => {
-    const validExtensions = ['.r', '.R', '.csv', '.xlsx', '.xls', '.txt', '.py', '.sql', '.png'];
+    const validExtensions = ['.r', '.R', '.csv', '.xlsx', '.xls', '.txt', '.py', '.sql', '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'];
     const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
     
     if (!validExtensions.includes(fileExtension)) {
@@ -94,6 +94,7 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
     if (extension === 'csv') return <Database className="h-8 w-8 text-success" />;
     if (extension === 'r') return <FileText className="h-8 w-8 text-primary" />;
     if (extension === 'xlsx' || extension === 'xls') return <FileSpreadsheet className="h-8 w-8 text-green-600" />;
+    if (['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'].includes(extension || '')) return <Image className="h-8 w-8 text-purple-600" />;
     return <FileText className="h-8 w-8 text-muted-foreground" />;
   };
 
@@ -125,14 +126,14 @@ export const FileUpload = ({ onFileUploaded }: FileUploadProps) => {
             {isDragActive ? "Drop files here" : "Upload your files"}
           </h3>
           <p className="text-sm text-muted-foreground">
-            Drag and drop your data analysis files or click to browse
+            Drag and drop your data analysis files, images, or click to browse
           </p>
         </div>
           
           <input
             type="file"
             multiple
-            accept=".r,.R,.csv,.xlsx,.xls,.txt,.py,.sql,.png"
+            accept=".r,.R,.csv,.xlsx,.xls,.txt,.py,.sql,.png,.jpg,.jpeg,.gif,.bmp,.webp,.svg"
             onChange={handleFileInput}
             className="hidden"
             id="file-upload"
