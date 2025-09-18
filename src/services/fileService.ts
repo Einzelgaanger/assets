@@ -17,6 +17,20 @@ export type FileCategory = 'initial' | 'department' | 'grouped';
 const BUCKET_NAME = 'research-files';
 
 export class FileService {
+  // Check if category column exists in the database
+  private static async checkCategoryColumnExists(): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('files')
+        .select('category')
+        .limit(1);
+      
+      return !error; // If no error, column exists
+    } catch {
+      return false; // If error, column doesn't exist
+    }
+  }
+
   // Upload a file to Supabase storage
   static async uploadFile(file: File, category: FileCategory = 'initial'): Promise<GlobalFile> {
     const fileId = crypto.randomUUID();
@@ -50,7 +64,7 @@ export class FileService {
         download_url: data.publicUrl,
         type: file.type,
         path: filePath,
-        category: category,
+        ...(await this.checkCategoryColumnExists() ? { category } : {}),
       })
       .select()
       .single();
@@ -86,6 +100,19 @@ export class FileService {
   // Get files by category
   static async getFilesByCategory(category: FileCategory): Promise<GlobalFile[]> {
     try {
+      // Check if category column exists
+      const hasCategoryColumn = await this.checkCategoryColumnExists();
+      
+      if (!hasCategoryColumn) {
+        // If no category column, return all files for 'initial' category
+        // or return empty array for other categories
+        if (category === 'initial') {
+          return await this.getAllFiles();
+        } else {
+          return [];
+        }
+      }
+
       const { data: files, error } = await supabase
         .from('files')
         .select('*')
