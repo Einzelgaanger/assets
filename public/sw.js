@@ -1,6 +1,6 @@
-const CACHE_NAME = 'data-analysis-file-hub-v3';
-const STATIC_CACHE = 'static-v3';
-const DYNAMIC_CACHE = 'dynamic-v3';
+const CACHE_NAME = 'data-analysis-file-hub-v4';
+const STATIC_CACHE = 'static-v4';
+const DYNAMIC_CACHE = 'dynamic-v4';
 
 // Files to cache immediately
 const STATIC_FILES = [
@@ -20,14 +20,13 @@ const STATIC_FILES = [
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing...');
   event.waitUntil(
-    // First, clear all old caches
+    // Clear ALL caches first (more aggressive approach)
     caches.keys().then((cacheNames) => {
+      console.log('Clearing all existing caches:', cacheNames);
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
+          console.log('Deleting cache:', cacheName);
+          return caches.delete(cacheName);
         })
       );
     }).then(() => {
@@ -50,12 +49,14 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log('Service Worker activating...');
   event.waitUntil(
+    // Clear ALL caches except current ones
     caches.keys()
       .then((cacheNames) => {
+        console.log('Found caches during activation:', cacheNames);
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-              console.log('Deleting old cache:', cacheName);
+              console.log('Deleting old cache during activation:', cacheName);
               return caches.delete(cacheName);
             }
           })
@@ -83,7 +84,7 @@ self.addEventListener('fetch', (event) => {
   // For module scripts, always try network first to avoid MIME type issues
   if (event.request.destination === 'script' && event.request.url.includes('.js')) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-cache' })
         .then((response) => {
           if (response.ok) {
             // Cache successful responses
