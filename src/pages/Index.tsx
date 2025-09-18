@@ -1,14 +1,32 @@
-import { SectionUpload } from "@/components/SectionUpload";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Info, Server, LogOut, BarChart3, Users, Building2 } from "lucide-react";
+import { Info, Server, LogOut, BarChart3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Navigation, PageType } from "@/components/Navigation";
+import InitialAnalysisPage from "./InitialAnalysisPage";
+import DepartmentAnalysisPage from "./DepartmentAnalysisPage";
+import GroupedAnalysisPage from "./GroupedAnalysisPage";
 
 const Index = () => {
   const { isAuthenticated, logout } = useAuth();
+  const [currentPage, setCurrentPage] = useState<PageType>('initial');
 
   if (!isAuthenticated) {
     return null;
   }
+
+  const renderCurrentPage = () => {
+    switch (currentPage) {
+      case 'initial':
+        return <InitialAnalysisPage />;
+      case 'department':
+        return <DepartmentAnalysisPage />;
+      case 'grouped':
+        return <GroupedAnalysisPage />;
+      default:
+        return <InitialAnalysisPage />;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -37,6 +55,9 @@ const Index = () => {
           </Button>
         </div>
 
+        {/* Navigation */}
+        <Navigation currentPage={currentPage} onPageChange={setCurrentPage} />
+
         {/* Info Banner */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl p-6 mb-8 border border-blue-200 dark:border-blue-800">
           <div className="flex items-start space-x-3">
@@ -49,38 +70,14 @@ const Index = () => {
               <h3 className="font-semibold text-foreground mb-1">Secure Cloud Storage</h3>
               <p className="text-sm text-muted-foreground">
                 Your files are stored securely with automatic caching for instant access. 
-                Files are organized by analysis type and shared globally.
+                Files are organized by analysis type and shared globally across all users.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Three Sections */}
-        <div className="space-y-8">
-          {/* Initial Data Analysis Files */}
-          <SectionUpload
-            title="Initial Data Analysis Files"
-            description="Upload your raw data files, initial datasets, and preliminary analysis files. These are the foundation files for your data analysis projects."
-            category="initial"
-            icon={<BarChart3 className="h-5 w-5 text-primary" />}
-          />
-
-          {/* Department Analysis Files */}
-          <SectionUpload
-            title="≥1 Employees Department Analysis Files"
-            description="Upload department-specific analysis files, employee data reports, and departmental insights. Files for departments with one or more employees."
-            category="department"
-            icon={<Users className="h-5 w-5 text-green-600" />}
-          />
-
-          {/* Grouped Departments Analysis */}
-          <SectionUpload
-            title="Grouped Departments Analysis"
-            description="Upload cross-departmental analysis files, comparative studies, and consolidated reports that span multiple departments or organizational units."
-            category="grouped"
-            icon={<Building2 className="h-5 w-5 text-purple-600" />}
-          />
-        </div>
+        {/* Current Page Content */}
+        {renderCurrentPage()}
 
         {/* How to Use Section */}
         <div className="mt-12">
@@ -96,15 +93,15 @@ const Index = () => {
                 <div className="grid gap-2 text-sm text-muted-foreground">
                   <div className="flex items-center space-x-2">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                    <span>Upload files to the appropriate section based on your analysis type</span>
+                    <span>Navigate between analysis types using the tabs above</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                    <span>Upload files to the appropriate page based on your analysis type</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
                     <span>Files are automatically organized and visible to all users</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                    <span>Download files using the download button or copy the URL</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
