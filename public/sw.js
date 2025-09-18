@@ -30,7 +30,18 @@ self.addEventListener('install', (event) => {
         })
       );
     }).then(() => {
-      // Then cache new static files
+      // Clear any remaining JavaScript files from cache
+      return caches.open(DYNAMIC_CACHE).then((cache) => {
+        return cache.keys().then((requests) => {
+          const jsRequests = requests.filter(request => 
+            request.url.includes('.js') && request.url.includes('assets')
+          );
+          console.log('Clearing JavaScript files from cache:', jsRequests.length);
+          return Promise.all(jsRequests.map(request => cache.delete(request)));
+        });
+      });
+    }).then(() => {
+      // Then cache new static files (excluding JS files)
       return caches.open(STATIC_CACHE)
         .then((cache) => {
           console.log('Caching static files');
@@ -81,24 +92,28 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For module scripts, always try network first to avoid MIME type issues
+  // For module scripts, completely bypass cache to avoid MIME type issues
   if (event.request.destination === 'script' && event.request.url.includes('.js')) {
     event.respondWith(
-      fetch(event.request, { cache: 'no-cache' })
+      fetch(event.request, { 
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
+      })
         .then((response) => {
-          if (response.ok) {
-            // Cache successful responses
-            const responseToCache = response.clone();
-            caches.open(DYNAMIC_CACHE)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-          }
+          // Don't cache JavaScript files at all to avoid MIME issues
           return response;
         })
-        .catch(() => {
-          // Fallback to cache if network fails
-          return caches.match(event.request);
+        .catch((error) => {
+          console.error('Failed to fetch JavaScript file:', error);
+          // Return a basic error response instead of cached content
+          return new Response('JavaScript file not available', { 
+            status: 404, 
+            statusText: 'Not Found' 
+          });
         })
     );
     return;
